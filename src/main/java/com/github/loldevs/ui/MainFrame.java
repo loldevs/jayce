@@ -2,10 +2,7 @@ package com.github.loldevs.ui;
 
 import com.google.gson.Gson;
 import net.boreeas.riotapi.Shard;
-import net.boreeas.riotapi.spectator.GamePool;
-import net.boreeas.riotapi.spectator.GameUpdateTask;
-import net.boreeas.riotapi.spectator.InProgressGame;
-import net.boreeas.riotapi.spectator.SpectatorApiHandler;
+import net.boreeas.riotapi.spectator.*;
 import net.boreeas.riotapi.spectator.rest.FeaturedGame;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
@@ -13,6 +10,9 @@ import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Malte Schütze
@@ -106,14 +106,14 @@ public class MainFrame extends JFrame {
     }
 
     private void startDownload(Shard shard, InProgressGame game) {
-        GameUpdateTask task = gamePool.submit(game, ex -> outputTextArea.append("[" + shard.name() + "] [" + game.getGameId() + "] Cancelled: " + ex + "\n"));
+        GameUpdateTask task = gamePool.submit(game, ex -> log(shard, game, "Error: " + ex));
 
         task.setOnFinished(() -> saveGame(shard, game));
     }
 
     private void saveGame(Shard shard, InProgressGame game) {
         String outputName = shard.name + "-" + game.getGameId() + ".7z";
-        outputTextArea.append("[" + shard.name() + "] [" + game.getGameId() + "] Finished, saving to " + outputName + "\n");
+        log(shard, game, "Finished, saving to " + outputName);
 
         try {
             File file = new File(outputName);
@@ -130,14 +130,54 @@ public class MainFrame extends JFrame {
             chunks.setName("chunks");
             chunks.setDirectory(true);
             out.putArchiveEntry(chunks);
+            out.closeArchiveEntry();
 
             for (int i = game.getFirstAvailableChunk(); i <= game.getLastAvailableChunk(); i++) {
-                SevenZArchiveEntry chunkEntry = new SevenZArchiveEntry();
-                chunkEntry.setName(Integer.toString(i));
+                try {
+                    Chunk chunk = game.getFutureChunk(i).get(1, TimeUnit.SECONDS);
+
+                    SevenZArchiveEntry chunkEntry = new SevenZArchiveEntry();
+                    chunkEntry.setName("chunks/" + i + ".bin");
+                    chunkEntry.setDirectory(false);
+
+                    out.putArchiveEntry(chunkEntry);
+                    out.write(chunk.getBuffer());
+                    out.closeArchiveEntry();
+                } catch (final InterruptedException | ExecutionException | TimeoutException e) {
+                    log(shard, game, "Chunk #" + i + " is not available");
+                }
             }
 
+            SevenZArchiveEntry keyframes = new SevenZArchiveEntry();
+            keyframes.setName("keyframes");
+            keyframes.setDirectory(false);
+            out.putArchiveEntry(keyframes);
+            out.closeArchiveEntry();
+
+            for (int i = game.getFirstAvailableKeyFrame(); i <= game.getLastAvailableKeyFrame(); i++) {
+                try {
+
+                    Chunk chunk = game.getFutureChunk(i).get(1, TimeUnit.SECONDS);
+
+                    SevenZArchiveEntry chunkEntry = new SevenZArchiveEntry();
+                    chunkEntry.setName("chunks/" + i + ".bin");
+                    chunkEntry.setDirectory(false);
+
+                    out.putArchiveEntry(chunkEntry);
+                    out.write(chunk.getBuffer());
+                    out.closeArchiveEntry();
+                } catch (final InterruptedException | ExecutionException | TimeoutException e) {
+                    log(shard, game, "Keyframe #" + i + " is not available");
+                }
+            }
+
+            out.close();
         } catch (IOException ex) {
-            outputTextArea.append("[" + shard.name() + "] [" + game.getGameId() + "] Error saving archive: " + ex + "\n");
+            log(shard, game, "Error saving archive: " + ex);
         }
+    }
+
+    private void log(Shard shard, InProgressGame game, String msg) {
+        outputTextArea.append(String.format("[%4s] [%d] %s%n", shard.name, game.getGameId(), msg));
     }
 }
