@@ -186,7 +186,7 @@ public class MainFrame extends JFrame {
                     Chunk chunk = game.getFutureChunk(i).get(1, TimeUnit.SECONDS);
 
                     SevenZArchiveEntry chunkEntry = new SevenZArchiveEntry();
-                    chunkEntry.setName("chunks/" + i + ".bin");
+                    chunkEntry.setName("keyframe/" + i + ".bin");
                     chunkEntry.setDirectory(false);
 
                     out.putArchiveEntry(chunkEntry);
