@@ -1,6 +1,7 @@
 package com.github.loldevs.ui;
 
 import com.google.gson.Gson;
+import net.boreeas.riotapi.RequestException;
 import net.boreeas.riotapi.Shard;
 import net.boreeas.riotapi.spectator.*;
 import net.boreeas.riotapi.spectator.rest.FeaturedGame;
@@ -52,6 +53,31 @@ public class MainFrame extends JFrame {
             for (FeaturedGame featured: apiHandler.getFeaturedGames()) {
                 InProgressGame game = apiHandler.openFeaturedGame(featured);
                 startDownload(shard, game);
+            }
+        });
+
+        loadGameBtn.addActionListener(e -> {
+            if (gameIdTextField.getText().trim().isEmpty()) {
+                outputTextArea.append("Missing game id");
+                return;
+            }
+
+            if (encrytpionKeyTextField.getText().trim().isEmpty()) {
+                outputTextArea.append("Missing encryption key");
+                return;
+            }
+
+            Shard shard = (Shard) platformMenu.getSelectedItem();
+            SpectatorApiHandler apiHandler = new SpectatorApiHandler(shard);
+
+            try {
+                startDownload(shard, apiHandler.openGame(shard, Long.parseLong(gameIdTextField.getText().trim()), encrytpionKeyTextField.getText().trim()));
+                gameIdTextField.setText("");
+                encrytpionKeyTextField.setText("");
+            } catch (NumberFormatException ex) {
+                outputTextArea.append("Invalid game id: Not a number: " + gameIdTextField.getText().trim());
+            } catch (RequestException ex) {
+                outputTextArea.append("Game could not be opened: " + ex);
             }
         });
     }
