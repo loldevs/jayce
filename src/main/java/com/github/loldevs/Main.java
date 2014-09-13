@@ -59,7 +59,7 @@ public class Main {
 
                 String in;
                 while ((in = reader.readLine()) != null) {
-                    if ((in = in.trim()).isEmpty()) {
+                    if ((in = in.trim()).isEmpty() || in.charAt(0) == '#') {
                         continue;
                     }
 
