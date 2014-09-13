@@ -7,6 +7,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Options;
 
+import java.io.*;
+
 /**
  * @author Malte Schütze
  */
@@ -40,27 +42,37 @@ public class Main {
 
         if (cmd.hasOption('g')) {
             for (String info: cmd.getOptionValues('g')) {
-                String[] fields = info.split(" ");
 
-                if (fields.length != 3) {
-                    System.err.println("Not enough args for option -g (<region> <id> <key>): " + info);
-                    continue;
-                }
+                ValidatedGameInfo validatedGameInfo = new ValidatedGameInfo(info).validate();
+                if (validatedGameInfo.isBad()) continue;
 
-                Shard shard = getShardByName(fields[0]);
-
-                if (shard == null) {
-                    System.err.println("No shard for name: " + fields[0]);
-                    continue;
-                }
-
-                if (!fields[1].matches("[0-9]+")) {
-                    System.err.println("Illegal game id: " + fields[1]);
-                    continue;
-                }
+                Shard shard = validatedGameInfo.getShard();
 
                 SpectatorApiHandler handler = new SpectatorApiHandler(shard);
-                downloader.startDownload(shard, handler.openGame(shard, Long.parseLong(fields[1]), fields[2]));
+                downloader.startDownload(shard, handler.openGame(shard, validatedGameInfo.getGameId(), validatedGameInfo.getEncryptionKey()));
+            }
+        }
+
+        if (cmd.hasOption('i')) {
+            File file = new File(cmd.getOptionValue('i'));
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+
+                String in;
+                while ((in = reader.readLine()) != null) {
+                    if ((in = in.trim()).isEmpty()) {
+                        continue;
+                    }
+
+                    ValidatedGameInfo validatedGameInfo = new ValidatedGameInfo(in).validate();
+                    if (validatedGameInfo.isBad()) continue;
+
+                    Shard shard = validatedGameInfo.getShard();
+
+                    SpectatorApiHandler handler = new SpectatorApiHandler(shard);
+                    downloader.startDownload(shard, handler.openGame(shard, validatedGameInfo.getGameId(), validatedGameInfo.getEncryptionKey()));
+                }
+            } catch (IOException ex) {
+                System.err.println("Error reading from file: " + ex);
             }
         }
     }
@@ -77,5 +89,67 @@ public class Main {
         }
 
         return Shard.getBySpectatorPlatform(name);
+    }
+
+    private static class ValidatedGameInfo {
+        private boolean isBad;
+        private String info;
+        private String[] fields;
+        private Shard shard;
+        private long gameId;
+        private String encryptionKey;
+
+        public ValidatedGameInfo(String info) {
+            this.info = info;
+        }
+
+        boolean isBad() {
+            return isBad;
+        }
+
+        public String[] getFields() {
+            return fields;
+        }
+
+        public Shard getShard() {
+            return shard;
+        }
+
+        public long getGameId() {
+            return gameId;
+        }
+
+        public String getEncryptionKey() {
+            return encryptionKey;
+        }
+
+        public ValidatedGameInfo validate() {
+            fields = info.split(" ");
+
+            if (fields.length != 3) {
+                System.err.println("Not enough args for option -g (<region> <id> <key>): " + info);
+                isBad = true;
+                return this;
+            }
+
+            shard = getShardByName(fields[0]);
+
+            if (shard == null) {
+                System.err.println("No shard for name: " + fields[0]);
+                isBad = true;
+                return this;
+            }
+
+            if (!fields[1].matches("[0-9]+")) {
+                System.err.println("Illegal game id: " + fields[1]);
+                isBad = true;
+                return this;
+            }
+
+            isBad = false;
+            gameId = Long.parseLong(fields[1]);
+            encryptionKey = fields[2];
+            return this;
+        }
     }
 }
