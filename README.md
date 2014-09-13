@@ -22,8 +22,9 @@ Spectator file format:
 ```
 
 ##### Command line options
+
 Short | Long | Params | Description | Repeatable
-------------------------------------------------
+================================================
 -n | --no-gui | | Do not show a GUI |
 -f | --featured | region | Download featured games from the specified region | Yes
 -g | --game | "[region] [game id] [encryption key]" | Download the specified game | Yes
