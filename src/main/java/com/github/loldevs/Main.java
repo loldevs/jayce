@@ -1,6 +1,7 @@
 package com.github.loldevs;
 
 import net.boreeas.riotapi.Shard;
+import net.boreeas.riotapi.spectator.GameUpdateTask;
 import net.boreeas.riotapi.spectator.SpectatorApiHandler;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -24,8 +25,10 @@ public class Main {
         CommandLine cmd = parser.parse(options, args);
 
         GameDownloader downloader = new GameDownloader();
+        MainFrame frame = null;
         if (!cmd.hasOption('n')) {
-            new MainFrame(downloader).setVisible(true);
+            frame = new MainFrame(downloader);
+            frame.setVisible(true);
         }
 
         if (cmd.hasOption('f')) {
@@ -35,7 +38,10 @@ public class Main {
                 if (shard == null) {
                     System.err.println("No shard for name: " + shardName);
                 } else {
-                    downloader.getFeatured(shard);
+                    for (GameUpdateTask gameUpdateTask: downloader.getFeatured(shard)) {
+                        if (frame == null) break;
+                        frame.addProgressDisplay(gameUpdateTask);
+                    }
                 }
             }
         }
@@ -49,7 +55,8 @@ public class Main {
                 Shard shard = validatedGameInfo.getShard();
 
                 SpectatorApiHandler handler = new SpectatorApiHandler(shard);
-                downloader.startDownload(shard, handler.openGame(shard, validatedGameInfo.getGameId(), validatedGameInfo.getEncryptionKey()));
+                GameUpdateTask task = downloader.startDownload(shard, handler.openGame(shard, validatedGameInfo.getGameId(), validatedGameInfo.getEncryptionKey()));
+                if (frame != null) frame.addProgressDisplay(task);
             }
         }
 
@@ -69,7 +76,8 @@ public class Main {
                     Shard shard = validatedGameInfo.getShard();
 
                     SpectatorApiHandler handler = new SpectatorApiHandler(shard);
-                    downloader.startDownload(shard, handler.openGame(shard, validatedGameInfo.getGameId(), validatedGameInfo.getEncryptionKey()));
+                    GameUpdateTask task = downloader.startDownload(shard, handler.openGame(shard, validatedGameInfo.getGameId(), validatedGameInfo.getEncryptionKey()));
+                    if (frame != null) frame.addProgressDisplay(task);
                 }
             } catch (IOException ex) {
                 System.err.println("Error reading from file: " + ex);

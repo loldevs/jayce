@@ -2,9 +2,11 @@ package com.github.loldevs;
 
 import net.boreeas.riotapi.RequestException;
 import net.boreeas.riotapi.Shard;
+import net.boreeas.riotapi.spectator.GameUpdateTask;
 import net.boreeas.riotapi.spectator.InProgressGame;
 import net.boreeas.riotapi.spectator.SpectatorApiHandler;
 
+import javax.lang.model.type.ErrorType;
 import javax.swing.*;
 
 /**
@@ -15,7 +17,6 @@ public class MainFrame extends JFrame {
     // ---- Components
 
     private JScrollPane outputScrollPane = new JScrollPane();
-    private JTextArea outputTextArea = new JTextArea();
 
     private JComboBox<Shard> platformMenu = new JComboBox<Shard>(Shard.values());
     private JTextField gameIdTextField = new JTextField("Game Id");
@@ -36,21 +37,21 @@ public class MainFrame extends JFrame {
     }
 
     private void initComponents() {
-        outputScrollPane.add(outputTextArea);
 
         loadFeaturedGame.addActionListener(e -> {
             Shard shard = (Shard) platformMenu.getSelectedItem();
-            downloader.getFeatured(shard);
+            for (GameUpdateTask task: downloader.getFeatured(shard)) {
+                addProgressDisplay(task);
+            }
         });
 
         loadGameBtn.addActionListener(e -> {
             if (gameIdTextField.getText().trim().isEmpty()) {
-                outputTextArea.append("Missing game id");
+
                 return;
             }
 
             if (encrytpionKeyTextField.getText().trim().isEmpty()) {
-                outputTextArea.append("Missing encryption key");
                 return;
             }
 
@@ -59,15 +60,36 @@ public class MainFrame extends JFrame {
 
             try {
                 InProgressGame game = apiHandler.openGame(shard, Long.parseLong(gameIdTextField.getText().trim()), encrytpionKeyTextField.getText().trim());
-                downloader.startDownload(shard, game);
+                addProgressDisplay(downloader.startDownload(shard, game));
                 gameIdTextField.setText("");
                 encrytpionKeyTextField.setText("");
             } catch (NumberFormatException ex) {
-                outputTextArea.append("Invalid game id: Not a number: " + gameIdTextField.getText().trim());
+                //outputTextArea.append("Invalid game id: Not a number: " + gameIdTextField.getText().trim());
             } catch (RequestException ex) {
-                outputTextArea.append("Game could not be opened: " + ex);
+                //outputTextArea.append("Game could not be opened: " + ex);
             }
         });
+    }
+
+    public void addProgressDisplay(GameUpdateTask task) {
+        GameDownloadProgressDisplay display = new GameDownloadProgressDisplay();
+
+        task.addOnFinished(() -> display.setStatus(Status.SAVED));
+        task.addOnError(ex -> {
+            if (ex instanceof RequestException) {
+                RequestException.ErrorType errorType = ((RequestException) ex).getErrorType();
+                if (errorType.code >= RequestException.ErrorType.CLOUDFLARE_GENERIC.code && errorType.code <= RequestException.ErrorType.CLOUDFLARE_SSL_HANDSHAKE_FAILED.code) {
+                    return;
+                }
+            }
+
+            display.setStatus(Status.ERROR);
+            display.setHover(ex.getMessage());
+        });
+        task.addOnChunkPulled(i -> display.setChunk(i, Status.SAVED));
+        task.addOnKeyframePulled(i -> display.setKeyframe(i, Status.SAVED));
+        task.addOnChunkFailed(i -> display.setChunk(i, Status.ERROR));
+        task.setOnKeyframeFailed(i -> display.setKeyframe(i, Status.ERROR));
     }
 
     private void setLayout() {
@@ -117,10 +139,5 @@ public class MainFrame extends JFrame {
         group.addComponent(loadFeaturedGame);
 
         return group;
-    }
-
-
-    private void log(Shard shard, InProgressGame game, String msg) {
-        outputTextArea.append(String.format("[%4s] [%d] %s%n", shard.name, game.getGameId(), msg));
     }
 }

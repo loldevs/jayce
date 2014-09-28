@@ -9,6 +9,8 @@ import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -20,19 +22,25 @@ public class GameDownloader {
     private GamePool gamePool = new GamePool();
     private ExecutorService keepAlive = Executors.newFixedThreadPool(1);
 
-    public void getFeatured(Shard shard) {
+    public Set<GameUpdateTask> getFeatured(Shard shard) {
         SpectatorApiHandler handler = new SpectatorApiHandler(shard);
 
+        Set<GameUpdateTask> result = new HashSet<>();
+
         for (FeaturedGame game: handler.getFeaturedGames()) {
-            startDownload(shard, handler.openFeaturedGame(game));
+            result.add(startDownload(shard, handler.openFeaturedGame(game)));
         }
+
+        return result;
     }
 
-    public void startDownload(Shard shard, InProgressGame game) {
+    public GameUpdateTask startDownload(Shard shard, InProgressGame game) {
         GameUpdateTask task = gamePool.submit(game/*, ex -> log(shard, game, "Error: " + ex)*/);
 
         task.setOnFinished(() -> saveGame(shard, game));
         keepAlive.submit(game::waitForEndOfGame); // Make sure we don't exit before all games are downloaded
+
+        return task;
     }
 
 
