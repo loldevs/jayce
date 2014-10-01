@@ -5,8 +5,8 @@ import net.boreeas.riotapi.Shard;
 import net.boreeas.riotapi.spectator.GameUpdateTask;
 import net.boreeas.riotapi.spectator.InProgressGame;
 import net.boreeas.riotapi.spectator.SpectatorApiHandler;
+import net.boreeas.riotapi.spectator.rest.GameMetaData;
 
-import javax.lang.model.type.ErrorType;
 import javax.swing.*;
 
 /**
@@ -16,7 +16,7 @@ public class MainFrame extends JFrame {
 
     // ---- Components
 
-    private JScrollPane outputScrollPane = new JScrollPane();
+    private DisplayPanel outputScrollPane = new DisplayPanel();
 
     private JComboBox<Shard> platformMenu = new JComboBox<Shard>(Shard.values());
     private JTextField gameIdTextField = new JTextField("Game Id");
@@ -72,7 +72,8 @@ public class MainFrame extends JFrame {
     }
 
     public void addProgressDisplay(GameUpdateTask task) {
-        GameDownloadProgressDisplay display = new GameDownloadProgressDisplay();
+        GameMetaData meta = task.getGame().getMetaData();
+        GameDownloadProgressDisplay display = new GameDownloadProgressDisplay(meta.getPlatformId() + "-" + meta.getGameId());
 
         task.addOnFinished(() -> display.setStatus(Status.SAVED));
         task.addOnError(ex -> {
@@ -89,7 +90,9 @@ public class MainFrame extends JFrame {
         task.addOnChunkPulled(i -> display.setChunk(i, Status.SAVED));
         task.addOnKeyframePulled(i -> display.setKeyframe(i, Status.SAVED));
         task.addOnChunkFailed(i -> display.setChunk(i, Status.ERROR));
-        task.setOnKeyframeFailed(i -> display.setKeyframe(i, Status.ERROR));
+        task.addOnKeyframeFailed(i -> display.setKeyframe(i, Status.ERROR));
+
+        outputScrollPane.addDisplay(display);
     }
 
     private void setLayout() {

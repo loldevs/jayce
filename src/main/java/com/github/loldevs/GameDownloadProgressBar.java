@@ -37,7 +37,7 @@ public class GameDownloadProgressBar extends Component {
         int normalizedChunkCount = ((chunks.size() + 1) / 2) * 2; // is `size` if size is even, else `size + 1`
         int count = Math.max(keyframes.size(), normalizedChunkCount);
 
-        int xscale = clip.width / count;
+        int xscale = clip.width / Math.max(count, 1);
         int yscale = clip.height / 2;
 
         drawStatusBar(g, chunks, clip.x, clip.y, xscale, yscale);
