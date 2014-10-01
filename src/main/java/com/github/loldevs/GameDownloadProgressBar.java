@@ -19,6 +19,7 @@ public class GameDownloadProgressBar extends Component {
         }
 
         keyframes.add(status);
+        repaint();
     }
 
     public synchronized void setChunk(int idx, Status status) {
@@ -29,6 +30,7 @@ public class GameDownloadProgressBar extends Component {
         }
 
         chunks.add(status);
+        repaint();
     }
 
     @Override

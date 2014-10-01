@@ -40,9 +40,12 @@ public class MainFrame extends JFrame {
 
         loadFeaturedGame.addActionListener(e -> {
             Shard shard = (Shard) platformMenu.getSelectedItem();
-            for (GameUpdateTask task: downloader.getFeatured(shard)) {
-                addProgressDisplay(task);
-            }
+            new Thread(() -> {
+                for (GameUpdateTask task : downloader.getFeatured(shard)) {
+                    addProgressDisplay(task);
+                }
+                repaint();
+            }).start();
         });
 
         loadGameBtn.addActionListener(e -> {
@@ -63,6 +66,7 @@ public class MainFrame extends JFrame {
                 addProgressDisplay(downloader.startDownload(shard, game));
                 gameIdTextField.setText("");
                 encrytpionKeyTextField.setText("");
+                repaint();
             } catch (NumberFormatException ex) {
                 //outputTextArea.append("Invalid game id: Not a number: " + gameIdTextField.getText().trim());
             } catch (RequestException ex) {
@@ -73,7 +77,7 @@ public class MainFrame extends JFrame {
 
     public void addProgressDisplay(GameUpdateTask task) {
         GameMetaData meta = task.getGame().getMetaData();
-        GameDownloadProgressDisplay display = new GameDownloadProgressDisplay(meta.getPlatformId() + "-" + meta.getGameId());
+        GameDownloadProgressDisplay display = new GameDownloadProgressDisplay(meta.getPlatform().name + "-" + meta.getGameId());
 
         task.addOnFinished(() -> display.setStatus(Status.SAVED));
         task.addOnError(ex -> {

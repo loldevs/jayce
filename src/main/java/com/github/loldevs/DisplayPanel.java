@@ -16,7 +16,7 @@ public class DisplayPanel extends JPanel {
         rebuildLayout();
     }
 
-    public void addDisplay(@Nonnull GameDownloadProgressDisplay display) {
+    public synchronized void addDisplay(@Nonnull GameDownloadProgressDisplay display) {
         displays.add(display);
         rebuildLayout();
     }
@@ -30,13 +30,14 @@ public class DisplayPanel extends JPanel {
         GroupLayout.SequentialGroup vertGroup = layout.createSequentialGroup();
 
         for (GameDownloadProgressDisplay display: displays) {
+
             horGroup.addComponent(display);
 
-            vertGroup.addComponent(display, 30, 30, 30);
+            vertGroup.addComponent(display, 34, 34, 34);
             vertGroup.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
         }
 
-        layout.setHorizontalGroup(horGroup);
-        layout.setVerticalGroup(vertGroup);
+        layout.setHorizontalGroup(layout.createSequentialGroup().addContainerGap().addGroup(horGroup).addContainerGap());
+        layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addGroup(vertGroup).addContainerGap());
     }
 }

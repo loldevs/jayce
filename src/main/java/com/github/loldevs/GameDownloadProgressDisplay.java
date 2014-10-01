@@ -27,13 +27,13 @@ public class GameDownloadProgressDisplay extends JPanel {
         group.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
         group.addComponent(progressBar);
         group.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
-        group.addComponent(statusIndicator);
+        group.addComponent(statusIndicator, GameDownloadStatusIndicator.SIZE, GameDownloadStatusIndicator.SIZE, GameDownloadStatusIndicator.SIZE);
 
         return group;
     }
 
     private GroupLayout.Group createVerticalGroup(GroupLayout layout) {
-        GroupLayout.ParallelGroup group = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
+        GroupLayout.ParallelGroup group = layout.createParallelGroup(GroupLayout.Alignment.CENTER);
 
         group.addComponent(statusIndicator);
         group.addComponent(progressBar);
