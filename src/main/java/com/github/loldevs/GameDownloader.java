@@ -93,7 +93,7 @@ public class GameDownloader {
                     Chunk chunk = game.getFutureChunk(i).get(1, TimeUnit.SECONDS);
 
                     SevenZArchiveEntry chunkEntry = new SevenZArchiveEntry();
-                    chunkEntry.setName("keyframe/" + i + ".bin");
+                    chunkEntry.setName("keyframes/" + i + ".bin");
                     chunkEntry.setDirectory(false);
 
                     out.putArchiveEntry(chunkEntry);
