@@ -40,8 +40,8 @@ public class GameDownloadProgressBar extends Component {
         int xscale = clip.width / Math.max(count, 1);
         int yscale = clip.height / 2;
 
-        drawStatusBar(g, chunks, clip.x, clip.y, xscale, yscale);
-        drawStatusBar(g, keyframes, clip.x, clip.y + yscale, 2 * xscale, yscale);
+        drawStatusBar(g, chunks, clip.x, clip.y, xscale, yscale - 1);
+        drawStatusBar(g, keyframes, clip.x, clip.y + yscale, 2 * xscale, yscale - 1);
     }
 
     private void drawStatusBar(Graphics g, List<Status> stati, int x, int y, int width, int height) {
@@ -63,7 +63,7 @@ public class GameDownloadProgressBar extends Component {
             }
 
             g.setColor(color);
-            g.fillRect(x + i*width, y, width, height);
+            g.fillRect(x + i*width, y, width - 1, height);
         }
     }
 }
