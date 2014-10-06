@@ -83,7 +83,7 @@ public class GameDownloader {
 
             SevenZArchiveEntry keyframes = new SevenZArchiveEntry();
             keyframes.setName("keyframes");
-            keyframes.setDirectory(false);
+            keyframes.setDirectory(true);
             out.putArchiveEntry(keyframes);
             out.closeArchiveEntry();
 
