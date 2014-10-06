@@ -37,7 +37,7 @@ public class GameDownloader {
     public GameUpdateTask startDownload(Shard shard, InProgressGame game) {
         GameUpdateTask task = gamePool.submit(game/*, ex -> log(shard, game, "Error: " + ex)*/);
 
-        task.setOnFinished(() -> saveGame(shard, game));
+        task.addOnFinished(() -> saveGame(shard, game));
         keepAlive.submit(game::waitForEndOfGame); // Make sure we don't exit before all games are downloaded
 
         return task;

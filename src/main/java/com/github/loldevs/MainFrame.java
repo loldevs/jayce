@@ -68,9 +68,11 @@ public class MainFrame extends JFrame {
                 encrytpionKeyTextField.setText("");
                 repaint();
             } catch (NumberFormatException ex) {
+                ex.printStackTrace();
                 //outputTextArea.append("Invalid game id: Not a number: " + gameIdTextField.getText().trim());
             } catch (RequestException ex) {
                 //outputTextArea.append("Game could not be opened: " + ex);
+                ex.printStackTrace();
             }
         });
     }
@@ -92,9 +94,16 @@ public class MainFrame extends JFrame {
             display.setHover(ex.getMessage());
         });
         task.addOnChunkPulled(i -> display.setChunk(i, Status.SAVED));
-        task.addOnKeyframePulled(i -> display.setKeyframe(i, Status.SAVED));
         task.addOnChunkFailed(i -> display.setChunk(i, Status.ERROR));
-        task.addOnKeyframeFailed(i -> display.setKeyframe(i, Status.ERROR));
+
+        task.addOnKeyframePulled(i -> {
+            display.setKeyframe(i, Status.SAVED);
+            System.out.println(">>>>> KEYFRAME [" + i + "] pulled");
+        });
+        task.addOnKeyframeFailed(i -> {
+            display.setKeyframe(i, Status.ERROR);
+            System.out.println(">>>>> KEYFRAME [" + i + "] failed");
+        });
 
         outputScrollPane.addDisplay(display);
     }

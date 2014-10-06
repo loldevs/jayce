@@ -13,23 +13,23 @@ public class GameDownloadProgressBar extends Component {
 
     public synchronized void setKeyframe(int idx, Status status) {
         if (idx >= keyframes.size()) {
-            for (int i = keyframes.size(); i < idx; i++) {
+            for (int i = keyframes.size(); i <= idx; i++) {
                 keyframes.add(Status.IN_PROGRESS);
             }
         }
 
-        keyframes.add(status);
+        keyframes.set(idx, status);
         repaint();
     }
 
     public synchronized void setChunk(int idx, Status status) {
         if (idx >= chunks.size()) {
-            for (int i = chunks.size(); i < idx; i++) {
+            for (int i = chunks.size(); i <= idx; i++) {
                 chunks.add(Status.IN_PROGRESS);
             }
         }
 
-        chunks.add(status);
+        chunks.set(idx, status);
         repaint();
     }
 
