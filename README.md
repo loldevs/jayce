@@ -48,3 +48,7 @@ Short | Long | Params | Description | Repeatable
 - Under this is the region selector
 - Enter game id and encryption key in the specified boxes and press the "Load Game" button to load the specified game.
 - Or press the "Load Featured Games" buttons and load all the featured games in this region
+
+
+#### Get It
+See the [release listing](https://github.com/loldevs/jayce/releases)
